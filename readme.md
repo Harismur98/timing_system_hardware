@@ -19,7 +19,9 @@ A Node.js-based RFID leaderboard system that reads RFID card data from a serial 
    cd rfid-leaderboard
 
 2. **Install dependencies**
-    ```npm install
+    ```
+    npm install
 
 3. **Start the app**
-    ```npm start or npm run dev
+    ```
+    npm start or npm run dev
