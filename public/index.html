@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Racing Dashboard</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial; background: #111; color: #eee; text-align: center; }
+    h1 { color: #0f0; }
+    table { margin: auto; border-collapse: collapse; width: 80%; margin-bottom: 20px; }
+    th, td { border: 1px solid #444; padding: 8px; }
+    th { background: #222; }
+    .finished { background: #222; border: 2px solid gold; }
+    .controls { margin: 15px; }
+    #resultsTable { display: none; }
+  </style>
+</head>
+<body>
+  <h1>🏁 Racing Dashboard</h1>
+
+  <div class="controls">
+    <label for="raceMode">Race Mode:</label>
+    <select id="raceMode">
+      <option value="1">Mode 1 - Fastest Finisher</option>
+      <option value="2">Mode 2 - Lowest Total Time</option>
+      <option value="3">Mode 3 - Lowest Lap Time</option>
+    </select>
+
+     <button id="resetBtn">🔄 Reset Race</button>
+  </div>
+
+  <!-- Live Leaderboard -->
+  <h2>Live Leaderboard</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Pos</th>
+        <th>Card ID</th>
+        <th>Laps</th>
+        <th>Last Lap (s)</th>
+        <th>Total Time (s)</th>
+        <th>Best Lap (s)</th>
+        <th>Interval (s)</th>
+        <th>Gap to Leader (s)</th>
+        <th>Hits (this lap)</th>
+        <th>Hits per Lap</th>
+      </tr>
+    </thead>
+    <tbody id="racers"></tbody>
+  </table>
+
+  <!-- Final Results -->
+  <h2>Final Results</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Pos</th>
+        <th>Card ID</th>
+        <th>Laps</th>
+        <th>Total Time</th>
+        <th>Best Lap/Time</th>
+      </tr>
+    </thead>
+    <tbody id="results"></tbody>
+  </table>
+
+  <script>
+    const socket = io();
+    const racersTable = document.getElementById('racers');
+    const resultsTable = document.getElementById('resultsTable');
+    const resultsBody = document.getElementById('results');
+
+    // Live leaderboard updates
+    socket.on('update', data => {
+      racersTable.innerHTML = "";
+      data.racers.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.position}</td>
+          <td>${r.cardId}</td>
+          <td>${r.laps}</td>
+          <td>${r.lastLapTimeFormatted || '-'}</td>
+          <td>${r.totalTimeFormatted}</td>
+          <td>${r.bestLap ? `Lap ${r.bestLap.lap}/ ${r.bestLap.timeformated}` : '-'}</td>
+          <td>${r.intervalFormatted}</td>
+          <td>${r.gapToLeaderFormatted}</td>
+          <td>${r.hitsThisLap}</td>
+          <td>${r.lapHits.join(', ') || '-'}</td>
+        `;
+        console.log(r.bestLap)
+        racersTable.appendChild(tr);
+      });
+    });
+
+    // Show final results when race ends
+    socket.on('finish', data => {
+      resultsBody.innerHTML = "";
+      resultsTable.style.display = "table";
+
+      data.results.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${r.cardId}</td>
+          <td>${r.laps}</td>
+          <td>${r.totalTimeFormatted}</td>
+          <td>Lap ${r.bestLap.lap} / ${r.bestLap.timeformated}</td>
+        `;
+        console.log(r);
+        resultsBody.appendChild(tr);
+      });
+    });
+
+
+    // listen for server mode updates
+    socket.on('mode', (data) => {
+      document.getElementById('raceMode').value = data.raceMode;
+    });
+
+    // send mode change when user switches dropdown
+    document.getElementById('raceMode').addEventListener('change', (e) => {
+      const newMode = parseInt(e.target.value, 10);
+      socket.emit('setMode', { raceMode: newMode });
+    });
+
+    // Reset button handler
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm("Are you sure you want to reset the race?")) {
+        socket.emit('resetRace'); // tell server to reset
+      }
+    });
+  </script>
+</body>
+</html>
