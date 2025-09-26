@@ -1,6 +1,6 @@
 # Leaderboard System
 
-A Node.js-based RFID leaderboard system that reads RFID card data from a serial (COM) port and tracks lap times, intervals, and leaderboards in real time.
+A Node.js-based leaderboard system that reads transponder data from a serial (COM) port and tracks lap times, intervals, and leaderboards in real time.
 
 ---
 
