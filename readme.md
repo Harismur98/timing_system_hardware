@@ -10,12 +10,13 @@ A Node.js-based RFID leaderboard system that reads RFID card data from a serial 
 - [Node.js](https://nodejs.org/) (>= 16.x recommended)  
 - sensor connected to your computer via COM port
 - run the port_list.js if you to see the connected port
+- to run it type (node port_list.js)
 
 ### Steps
 1. **Clone this repository**
    ```bash
    git clone https://github.com/Harismur98/timing_system_hardware.git
-   cd rfid-leaderboard
+   cd timing_system_hardware
 
 2. **Install dependencies**
     ```
@@ -23,4 +24,4 @@ A Node.js-based RFID leaderboard system that reads RFID card data from a serial 
 
 3. **Start the app**
     ```
-    npm start or npm run dev
+    npm start
