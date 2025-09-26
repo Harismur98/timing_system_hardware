@@ -1,6 +1,6 @@
 # Leaderboard System
 
-A Node.js-based leaderboard system that reads transponder data from a serial (COM) port and tracks lap times, intervals, and leaderboards in real time.
+A Node.js-based leaderboard system that reads transponder data from a serial (COM) port and tracks lap times, intervals, and leaderboards in real time. 
 
 ---
 
@@ -25,3 +25,7 @@ A Node.js-based leaderboard system that reads transponder data from a serial (CO
 3. **Start the app**
     ```
     npm start
+
+4. **Link**
+    ```
+    go to this link http://localhost:3000
