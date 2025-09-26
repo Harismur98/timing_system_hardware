@@ -33,7 +33,7 @@ port.on('data', (chunk) => {
   buffer = Buffer.concat([buffer, chunk]);
   logFrame(`Buffer length: ${buffer.length}, Buffer: ${buffer.toString('hex').toUpperCase()}`);
 
-  let frames = [];
+  let frames = []; // Every new chunk come in we reset the frames
 
   // while (buffer.length > 0) {
   //   if (buffer[0] === 0x02) {
@@ -61,6 +61,15 @@ port.on('data', (chunk) => {
   //   }
   // }
   while (buffer.length > 0) {
+    // Parse frames from buffer:
+    // - Keep looping while buffer has data
+    // - If first byte = 0x02 → treat as long frame (12 bytes)
+    //   • If not enough bytes yet, wait for more (break)
+    //   • Else slice out 12 bytes, push to frames[], remove from buffer
+    // - Else if first byte = 0x01 → treat as short frame (8 bytes)
+    //   • If not enough bytes yet, wait for more (break)
+    //   • Else slice out 8 bytes, push to frames[], remove from buffer
+    // - Else → first byte is junk → discard 1 byte and continue
         if (buffer[0] === 0x02) {
             const expectedLength = 12; 
             if (buffer.length < expectedLength) break;
@@ -86,7 +95,12 @@ port.on('data', (chunk) => {
   }
 });
 
-function processFrame(frame) {
+function processFrame(frame){
+
+  if (!verifyChecksum(frame)) {
+    logFrame(`Invalid checksum: ${frame.toString('hex').toUpperCase()}`);
+    return; // ignore corrupted frame
+  }
   
   const hexArray = Array.from(frame, byte =>
     byte.toString(16).padStart(2, '0').toUpperCase()
@@ -100,6 +114,8 @@ function processFrame(frame) {
     updateRacer(cardId);
     logFrame(`Raw: ${hexArray.join(' ')} | CardID: ${cardId}`);
   }
+
+  //you can put code to process 01 here
 }
 
 function updateRacer(cardId) {
@@ -122,8 +138,8 @@ function updateRacer(cardId) {
     racers[cardId] = r;
   }
 
-  // always increment hits
-  r.hits++; // this is wrong we need to check the frame to get the count of the cardID.
+  // increment hits
+  r.hits++; 
   r.hitsThisLap++;
   r.lastSeen = now;
 
@@ -283,7 +299,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Reset race (optional feature)
+  // Reset race 
   socket.on('resetRace', () => {
     racers = {};
     console.log('Race reset');
@@ -318,6 +334,16 @@ function format_time(ms) {
   return `${String(minutes).padStart(2, '0')}:` +
          `${String(seconds).padStart(2, '0')}.` +
          `${String(milliseconds).padStart(3, '0')}`;
+}
+
+function verifyChecksum(frame) {
+  if (frame.length < 2) return false;
+
+  const checksum = frame[frame.length - 1]; // last byte
+  const calc = frame.slice(0, frame.length - 1)
+                    .reduce((acc, b) => acc ^ b, 0);
+
+  return checksum === calc;
 }
 
 server.listen(3000, () => {
